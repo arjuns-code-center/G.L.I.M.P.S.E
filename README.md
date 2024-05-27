@@ -5,6 +5,9 @@ The official repository hosting all code written for our robot, Holly, as part o
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/f71b7bcf-c46c-49c1-87e7-a0b400572acd)
 
+# Video Demonstration
+You can find a video explaining how our project works [```here```](https://drive.google.com/file/d/1lyMbBKZVXDsyAAiOUiCWNVsrvlMIFfmM/view?usp=sharing)
+
 # Workspace Navigation
 Our project consists of 4 workspaces, each having their own documentation as we developed this project. Below is a brief description of each workspace we have, as well as a link to their documentations.
 

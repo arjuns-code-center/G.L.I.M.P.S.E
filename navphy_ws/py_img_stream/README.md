@@ -1,25 +1,8 @@
-
-![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/31cd0755-1891-4209-80e1-8882ec8a0141)
-
-Finally, using scipy in Python again in the ``python aruco_video_detection.py`` file, we can read the .mat file as a dictionary object. The code shown below shows how you can extract the camera matrix and distortion coefficients calculated in the MATLAB script.
-
-![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/30e5c43d-8466-49cd-bc4b-374deefec767)
-
-# Detection
-
-Once the camera is calibrated and you have the necessary parameters, you can start detecting markers!
-
-Next, to make the window size equal to the resolution, and have more pixels in the read image, we resize the window, and set the camera resolution as it reads. The default value will be 640x480.
-
-![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/baec31e8-b467-4534-87b8-2c8ac3404547)
-
-The code starts reading frames from the camera chosen, and once it sees an ArUco marker, it will draw an outline on it, tell you its ID in the center of the marker, and also give you its distance from the camera in millimeters. The rotational and translational vectors are calculated with pose estimation using the camera calibration parameters.
-
-![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/a37714aa-beba-4843-b19a-d2f58ae1bedc)
-
-![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/8fa7bf18-5571-4064-b47d-8fb7ea7be4e1)
+# ArUco Detection and Pose Estimation
+Below is our documentation on how we perform our computer vision for marker detection. Firstly, we calibrate the camera using 10 images of a checkerboard that we took, with different distances and angles. Using this, we run a [```MATLAB calibration script```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/blob/main/navphy_ws/calibration/camera_calibrator_script.m) to get our camera matrix parameters and distortion coefficients. This saves a parameters.mat file in our [```calibration```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/tree/main/navphy_ws/calibration) directory. We then use this .mat file in our code to perform detection and pose estimation. 
 
 # The Translational Vector
+We are interested in the translational vector for our project. It is as follows:
 
 ``tvec = [x, y, d]`` where
 
@@ -31,7 +14,7 @@ The code starts reading frames from the camera chosen, and once it sees an ArUco
 
 # Output
 
-Here is how the detected image looks like. You have the ability to save aruco detected images by pressing ``s`` on the keyboard.
+Here is how the detected image looks like. This information gets passed down to our serial node which will move the servos to the center of the marker. 
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/31181203-7a5d-4ea5-ab4f-5fbfafec20a9)
 

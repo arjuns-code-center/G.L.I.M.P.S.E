@@ -1,0 +1,276 @@
+2/4/24:
+
+1. Differential parameter in EKF: For wheel encoders, get position and velocity. Then, differentiate the position and compare to velocity to provide better odometry of robot compared to just using velocity -- commented out at the moment
+
+2. Added extra level of averaging between front and back wheels before average left and right sides for both position and velocity
+
+3. Removed - math.pi / 4 from twist angular Z in encoder odom publisher because we are no longer using Mecanum wheels
+
+4. Update ceres loss function to HuberLoss in SLAM configuration and change trust strategy to DOGLEG
+
+5. RPLiDAR direction switch so that the TF for it on URDF is facing front instead of back of robot. May cause map jump issue? -> Did not do anything
+
+6. Change encoder and IMU odom publisher period from 0.16 -> 0.016 and match with SLAM map transform publishing
+
+7. Add encoder position to /wheel/odom in EKF because we have better wheels. Odometry update is way better now
+
+8. Commented out LiDAR odometry for EKF
+
+9. Tried messing around on Pico code. The big issue now is the robot does not turn as we want it to. No point turn capability with  nav,and 90 degree turning is also bad. Need to figure out and fix the turning. Other than that, odometry is so much better and the updates have minor errors only. 
+
+2/5/24:
+
+1. Updated serial handler teleop to take in Twist messages from teleop_twist_keyboard to test out pico code
+
+2. Changed Pico code to match diff drive dynamics equations as per ros2_control. The Twist messages are being received a lot better, but robot is noticeably faster
+
+3. Tried experimenting with ros2_control again but failed to fix serial issue
+
+4. When robot made a full 180 degree turn, it had turned less on RViz. This is because we are dividing by wheel separation instead of wheel radius in sens2odom.py. Fixing this number should cause the turn amount to be correct 
+
+2/7/24:
+
+1. Pushed buggy nav to whatsgoingonomg branch and came back to nav_physical when it was all working fine
+
+2. Made some changes to pico code. Pico now sends different values for encoder pos and velocity. The conversions are in sens2odom
+
+3. Some minor changes to sens2odom. Navigation is working well all the transforms are good and on the robot. Tested with serial as well. Robot turns well. 
+
+4. I think there is an electrical issue. Nav was working well and then all of a sudden the left front wheel went mad and messed up navigation. Some loose wire connection I think 
+
+5. Confirmed there is an electrical issue. After switching drivers the issue still occurred in the front left wheel. So something is wrong from connection from driver to left front motor that is causing it go ham. Will need to take apart wiring and debug extensively 
+
+2/8/24:
+
+1. Tried integration of target tracking and navigation. Still needs a lot of work, but we got the goal pose publishing and the robot does move toward it 
+
+2. Create a launch file that launches target_pub, image_pub, nav2pose
+
+3. Changed lines 124 and 185 in nav2_params.yaml to make robot turn less violently
+
+4. Tested out integration. TODO in nav_physical.launch.py
+
+2/9/24:
+
+1. Some changes to nav2pose.py to update goal pose accordingly. The robot orientation was not being taken into consideration while the goal pose was published, causing error in navigation. Did not work
+
+2. Updated teleop.launch.py to have target_tracking.launch.py so we can see the goal poses being published according to the robot location while teleoperating (debugging)
+
+3. Updated sens2odom.py with self.phi*10 to fix odom orientation updates
+
+4. Changed current_pose updates from Odometry to TFMessage from the transform tree because the goal poses were not publishing correctly. Testing found a bunch of new errors in odometry
+
+5. Pushed to nav_unstable. Turning is the biggest issue right now that needs to be fixed in odometry
+
+2/10/24:
+
+1. Fixed odometry to be really good. It was a divide by pi in velocity of each wheel that needed to happen to fix it
+
+2. Updated robot footprint for costmaps in nav2_params.yaml so paths planned will be further away from collision
+
+3. Changed goal pose publishing from transform to odometry because the odometry is on point. It is offset by some amount but it is changing with the robot movement. Needs more work
+
+4. Merged nav_unstable into nav_physical 
+
+2/11/24:
+
+1. Made serial_handler more robust
+
+2. Fixed small errors in pico code to more accurately reflect differential drive kinematics in motor control
+
+3. Added some code to servos to make target tracking reporting of angles smoother
+
+4. Removed image_pub from the main provider of servo information, now in serial handler
+
+5.  Tweaked phi to make it more accurate to rotation
+
+6. Tweaked odometry to make it fit teleop better
+
+7. Improved target publishing wrt orientation, now it is about 90% there, it rotates with the target correctly
+
+8. IMPORTANT-- Found several more issues witth turning impacting odometry, more testing is needed because at this stage 90 degree and above turns still significantly impact odometry unfortunately - will probably need significantly more time, tweaking of nav parameters, and phi still drifts over a period of time
+
+9. Changed location of motor drivers and determined funky driving must be electrical
+
+10. Fixed power bus 
+
+2/12/24:
+
+1. One of the encoders is returning 0.0 when robot is in motion. This could be the cause of phi drifting so much
+
+2. Orientation is incorrect at times and correct at times for goal pose. Position is always correct. Fixed by tuning the encoder velocity thresholds to reject slight drifts accumulating. Odometry is back to being really good
+
+3. Updated robot URDF. LiDAR sits on the laptop now
+
+4. Integration testing -- nav2pose goal pose set to odom frame, matching current pose. Now the goal publishes correctly. Navigation is working well, path is truncated at 2.5 meters
+
+5. Preemptive goal -- if goal keeps changing very little a lot then it takes previous goal instead of the new one then we do not publish the new one and take the old one. We only take new one when we have significant goal pose change
+
+6. We cannot see any differences between old and new goal in in_range() function. Needs to be looked at tomorrow
+
+2/13/24:
+
+1. Fixed goal pose thresholding issue we had in 6. from yesterday. The variables were set to the same reference instead of copying over to new references
+
+2. Removed some leftover truncation in nav2pose that should not have been there
+
+3. Planner path -- needs to not plan outside the map to goal. Fix params in nav2_params.yaml 
+
+4. Search algorithm -- Wrote a node to publish random goals in a search radius if no target is spotted for 10 seconds. Need to add redefine() function using LiDAR data
+
+2/14/24:
+
+1. Finished search target node. Testing yielded more debugging
+
+2. Redefine function keeps publishing off the map. Need to check and fix
+
+2/15/24:
+
+1. correct_goal() works properly now. Made some changes to how the topic are subscribed to in SearchTargets node
+
+2. I think redefine is fixed. Distance is calculated correctly and the angle is also correct that it does not publish off the map. More extensive testing will be necessary to conclude search behaviors
+
+3. Planner -- turning and backup costs are not the best, so robot does not do its navigation very well in tight spaces. Need to tweak nav2_params.yaml to make it better
+
+2/20/24:
+
+1. Reduced reverse cost from 2.1 -> 1.0 in planner server in nav2_params.yaml 
+
+2. Increased cost_travel_multiplier from 2.0 -> 3.5 in planner server in nav2_params.yaml
+
+3. Updated distance to be correct so goals are published behind the robot. Need to tweak nav2_params.yaml to make robot reverse to goal
+
+4. CHanged DWB to MPPI controller. Path following is much better and the robot backs up
+
+2/21/24:
+
+1. Changed PreferForwardCritic to be false, and set threshold to stop preferring forward to be 1 meter
+
+2. Increased LiDAR correct_goal() padding to 0.5 from 0.25 
+
+3. Updated controller_server to have multiple controller plugins. These can be selected in the behavior tree
+
+4. Nav2 takes long time to fully initialize now after MPPI controller was added in
+
+5. Used NavFn planner with MPPI controller and set prefer forward critic to true and stop preferring for distances over 2 meters from robot. Robot does a backup more consistently now and does not switch directions when it doesnt have to
+
+6. Set ackermann constraint min_turning_r to 0.35 from 0.2 m based on URDF
+
+2/24/24:
+
+1. Built new chassis
+
+2. URDF updated to match new chassis
+
+3. Increased time to start publishing for search targets since I cannot find a way to delay it after everything is running (10->30 seconds)
+
+3/4/24:
+
+1. New upgrades to chassis
+
+2. URDF re-updated
+
+3. Costmap footprint updated
+
+4. Using SmacHybrid planner, Constrained smoother, and MPPI controller to get best navigation
+
+5. Increased wait time to 60 seconds in search_targets()
+
+3/5/24:
+
+1. Tested out for CDR. Serial side had some issues with buffer that stopped execution but once that was fixed it was all fine
+
+2. Another encoder is bugging -> bad connection on protoboard (I think). Now the left and right are lb and rf encoder values respectively
+
+3. Got first video for integration and searching 
+
+4. Messed up commit tree because I was trying to push large files into repository
+
+3/6/24:
+
+1. Fixed commit tree 
+
+2. Made target_pub separate with keyboard input on which target to track.
+
+3. Tuned nav2pose threshold values for considering new goal to publish (AND becomes OR because we want to publish when EITHER x OR y change beyond a value
+
+4. Tuned search behavior node to delay 30 seconds before starting up for nav
+
+5. Conducted full rigorous testing and noticed every time robot collides it kills serial (OSError: Input/output error) -> prob some loose connection
+
+6. Noticed spark from motor to ground -> chassis is picking up static due to spray paint?
+
+3/16/24-3/21/24:
+
+1. Updated search algorithm to be better
+
+2. Updated target publisher to take from a text file and give every target the same time period. Time period can be changed 
+
+3. Made a GUI that will run the different part of our system so it is user friendly
+
+4. Trying to see how NLP would work and how to put that in 
+
+3/21/24-3/24/24:
+
+1. Testing yields nav2_params.yaml MPPI controller needs to be tuned to not exceed behavior tree tick rate and controller frequency
+
+2. targets.txt needs to be reset at ever gui start so old targets do not get taken in by publisher
+
+3/25/24-3/26/24:
+
+1. Reduced controller frequency to 5 Hz and model_dt to 0.25. Control does not miss its loop duration anymore
+
+2. Disabling RViz does not tick behavior tree over 100 Hz. Any enablement of RViz causes ticking to go too fast
+
+3. LiDAR filter is working correctly. Robot navigates with top platform rods in place
+
+4. NUC might be too weak to support all the processing we are doing. Target Tracking servos are moving too slow. Need to run NUC in performance mode in BIOS and check if that solves problem. 
+
+3/27/24:
+
+1. Testing on NUC reveals removing RViz and Camera feed makes tracking faster and does not tick behavior tree faster than 100 Hz. Both work well
+
+2. Added clear targets button to GUI, and added functionality to target pub to make it work with clearing of targets
+
+3. More chassis upgrades machining
+
+4. Updating search algorithm. Giving more tries for initial last known location search and more time before new search is published
+
+5. Removed nav2 server verbosity 
+
+3/28/24:
+
+1. Put top platform on and got everything working with it
+
+2. Updated pico code on repo side
+
+3/30/24:
+
+1. Fixed SLAM issue that was there from yesterday
+
+2. Got new camera and USB hub, so put those in
+
+3. Added assisted teleop functionality to robot during navigation. Still, the issue of everything being reset when it hits an obstacle needs to figured out and solved. Maybe rubber bumpers?
+
+4/1/24-4/3/24:
+
+1. Adding the new servos into robot
+
+2. Updating target tracking to work with new servos. It works now
+
+3. Tweaked nav2pose to have a goal correction function like search_targets
+
+4. Changed LiDAR scan topic to /scan_filtered from /scan in nav2pose and search_targets
+
+4/4/24-4/8/24:
+
+1. New beams in chassis. Top platform is way more good looking
+
+2. PCB instead of protoboard. Everything works 
+
+3. Updated image pub with audio to have separate recordings of each target it receives. It now creates video, audio, and merged files from target ID and time so everything is unique
+    Releases old writers correctly (when new target received)
+    Creates new writers after releasing
+    When new target received, recording goes to 0 immediately, so target pub does not need a padding counter anymores
+
+4. Updated target pub based off new logic in image pub

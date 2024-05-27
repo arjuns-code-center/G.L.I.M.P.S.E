@@ -1,0 +1,4 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "/home/sdpteam12/Desktop/sdp-team-12/controlphy_ws/diffdrive_arduino"
+}

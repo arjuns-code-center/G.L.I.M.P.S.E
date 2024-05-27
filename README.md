@@ -17,6 +17,7 @@ These workspaces contain the core code to perform navigation and tracking. Note 
 ## PCB Documentation 
 Documentation about the PCB for our project can be found at [```PCB```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/tree/main/PCB) in the README.md file
 
+## ROS2 Installation
 Installation scripts for ROS2 Humble and Nav2 in [```rospkginstall```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/tree/main/navphy_ws/rospkgsinstall) directory within the [```navphy_ws```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/tree/main/navphy_ws) workspace. Once in that directory, run the following to install ROS2 Humble and Nav2 on your computer:
 ```
 ./ros_humble_setup.sh

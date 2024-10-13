@@ -1,6 +1,6 @@
 # SDP Team 12
 # Date created: 11/9/23
-# Date last modified: 3/30/24
+# Date last modified: 10/13/24
 # Description: launch file to launch all necessary components for physical navigation
 
 import os
@@ -31,6 +31,7 @@ def generate_launch_description():
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_rviz = LaunchConfiguration('rviz')
+    use_obs = LaunchConfiguration('obs')
 
     remappings = [('/tf', 'tf'),
                 ('/tf_static', 'tf_static')]
@@ -69,6 +70,12 @@ def generate_launch_description():
         name='rviz',
         default_value='False',
         description='Whether to use RViz or not'
+    )
+
+    declare_use_obs_cmd = DeclareLaunchArgument(
+        name='obs',
+        default_value='False',
+        description='Whether to use OBS or not'
     )
 
     start_robot_localization_cmd = Node(
@@ -184,6 +191,12 @@ def generate_launch_description():
         arguments=['-d', rviz_config_file]
     ) 
 
+    obs_node = Node(
+        package='obs_nodes',
+        executable='obs_target_update',
+        name='obsupdatetarget',
+    )
+
     start_search_cmd = Node(
         package='navigator',
         executable='searchtargets',
@@ -196,12 +209,6 @@ def generate_launch_description():
         name='camerasearch',
     )
 
-    start_obs_updater_cmd = Node(
-        package='obs_nodes',
-        executable='obs_target_update',
-        name='obsupdatetarget',
-    )
-
     start_cam_bop_macro_cmd = Node(
         package='robot_macros',
         executable='cam_bop',
@@ -212,6 +219,11 @@ def generate_launch_description():
         package='robot_macros',
         executable='rot_dance',
         name='rot_dance',
+    )
+
+    start_obs_updater_cmd = GroupAction(
+        condition=IfCondition(PythonExpression([use_obs])),
+        actions = [obs_node]
     )
 
     start_rviz_cmd = GroupAction(
@@ -236,6 +248,7 @@ def generate_launch_description():
     ld.add_action(declare_model_path_cmd)
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_use_rviz_cmd)
+    ld.add_action(declare_use_obs_cmd)
 
     ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(start_joint_state_publisher_cmd)
@@ -256,7 +269,7 @@ def generate_launch_description():
     ld.add_action(start_nav2pose_cmd)
     ld.add_action(start_camera_control_cmd)
     ld.add_action(start_obs_updater_cmd)
-    ld.add_action(start_cam_bop_macro_cmd)
+    # ld.add_action(start_cam_bop_macro_cmd)
     # ld.add_action(start_rot_dance_macro_cmd)
 
     ld.add_action(start_rviz_cmd)

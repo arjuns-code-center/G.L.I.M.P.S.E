@@ -1,1 +1,0 @@
-/home/sdpteam12/Desktop/sdp-team-12/navphy_ws/basic_mobile_robot/launch/slam.launch.py

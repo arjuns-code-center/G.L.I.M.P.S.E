@@ -5,11 +5,6 @@ The official repository hosting all code written for our robot, Holly, as part o
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/f71b7bcf-c46c-49c1-87e7-a0b400572acd)
 
-# Hardware and Software Block Diagrams
-| Hardware Block Diagram | Software Block Diagram |
-| ------------ | ----------- |
-![image](https://github.com/user-attachments/assets/7c915043-ed20-4b12-963b-183f904f64c6) | ![image](https://github.com/user-attachments/assets/63007075-c2b4-4839-a554-540017ee2d8d)
-
 # Video Demonstration
 You can find a video explaining how our project works [```here```](https://drive.google.com/file/d/1lyMbBKZVXDsyAAiOUiCWNVsrvlMIFfmM/view?usp=sharing)
 

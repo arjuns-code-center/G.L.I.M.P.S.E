@@ -13,9 +13,9 @@ The robot is localized using an Extended Kalman Filter (EKF). This node will tak
 
 Suppose you know the starting point of an object. You wish to know where the object will be in the future. To do this, you will make an estimate. But how do you make that estimate? You will need to know something about the system, like the dynamics of it. If you know how the object is moving, you will be able to mathematically obtain its location in the future, given you know how long into the future you are extrapolating. But in the real world, this measure of the object's movement is noisy. As the time into the future increases, so does the uncertainty associated with the location of the object. 
 
-But, it is still possible to make an estimate of the object's location using probability and odometry measurements. This is what the Kalman Filter does. It uses the covariances associated with each source of odometry, and models the object's future locations using a probabilistic approach. This process does involve some level of noise, but will be accurate to a margin. 
+But, it is still possible to make an estimate of the object's location using probability and odometry measurements. This is what the Kalman Filter does. It makes the assumption of linear motion model and environment, both modelled by a Gaussian. It uses the covariances associated with each source of odometry, and models the object's future locations using a probabilistic approach. This process does involve some level of noise, but will be accurate to a margin. 
 
-An extended Kalman filter is used when the measurements are noisy and there is uncertainty associated with the accuracy of each source of odometry. Since our wheel encoders do not account for wheel slippage, and our IMU can be noisy, and our LiDAR is not the best quality, it is possible that one or more of these readings are wrong. Our EKF node accounts for this error using covariances of each source and fuses all the odometry information together. 
+An extended Kalman filter is used when the measurement and motion model are not linear. Since our wheel encoders do not account for wheel slippage, and our IMU can be noisy, and our LiDAR is not the best quality, it is possible that one or more of these readings are wrong. Additionally, our motion may not be linear at times, so we will not have a way to model that using the Kalman Filter. 
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/ba99deaf-5d88-48d2-91d7-bec8f73e0685)
 
@@ -23,10 +23,14 @@ Shown below is a connected tree showing the flow of information for our localiza
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/33ba2bae-2a5e-466b-9848-0de6fb2b136f)
 
+We have the configuration file for EKF in the [```ekf.yaml```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/blob/main/navphy_ws/basic_mobile_robot/config/ekf.yaml) file. This file allows you to define the topics used for each source of odometry and the values you are taking from each source to fuse together. It outputs the fused data to the ```odom``` frame and the ```/odometry/filtered``` topic. 
+
 ## SLAM
 SLAM uses LiDAR ranges to localize the robot and navigate while mapping. It is a particle filter that probabilistically approximates the robot location using the measurements it receives. Our robot performs SLAM to generate the map and uses the joint odometry information from EKF to localize itself. Shown below is a SLAM generated map of the UMass Amherst M5! 
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/688b8ccc-6d9e-4b77-b894-d1b22d476c36)
+
+Our SLAM config file can be found in the [```doslam.yaml```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/blob/main/navphy_ws/basic_mobile_robot/config/doslam.yaml) file. This contains important information about the algorithm we are using, how many samples we are collecting, and what topic we are reading in ```LaserScan``` data from. We take this file from the [```ROS2 SLAM Toolbox GitHub repository```](https://github.com/SteveMacenski/slam_toolbox). 
 
 ## Coordinate Transforms
 Coordinate Transforms are how ROS understands movement. When the robot moves in the real world, ROS needs to know that is happening too. It does so by mapping the coordinates of each component of the robot and the environment relative to each other. In our robot description file, we have joints and links. Joints are pieces of the robot that can move and rotate. They connect links together (eg: Left wheel joint, Right wheel joint). Links are pieces of the robot that cannot move (eg: Base, LiDAR, Wheel). Each link and joint is mapped together using the ```robot_state_publisher``` and ```joint_state_publisher``` nodes provided by ROS. 
@@ -53,3 +57,5 @@ Next, the ```planner_server``` and ```controller_server``` are launched. The pla
 Next, the certerpiece of the navigation system comes online. This is the ```bt_navigator``` node, which takes in all the outputs and goal pose information and keeps track of the navigation. It uses the ```bond``` timer to sync all the servers together and run navigation smoothly. The final block diagram is as follows: 
 
 ![image](https://github.com/Samalmeida1028/sdp-team-12/assets/41523488/4a87bee6-890b-4f12-bda9-f1737b721793)
+
+More information about the different servers and the parameters associated with them can be found in the [```nav2_params.yaml```](https://github.com/arjuns-code-center/G.L.I.M.P.S.E/blob/main/navphy_ws/basic_mobile_robot/params/nav2_params.yaml) file. You can find all the information about each server in the [```Nav2 Configuration Guide```](https://docs.nav2.org/configuration/index.html), which describes each and every parameter we used. 
